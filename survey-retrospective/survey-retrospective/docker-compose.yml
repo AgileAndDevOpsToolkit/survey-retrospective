@@ -1,0 +1,14 @@
+services:
+  survey:
+    build: .
+    # Sans build local, utiliser l'image publiée par le workflow GitHub Actions :
+    # image: ghcr.io/agileanddevopstoolkit/survey-retrospective:latest
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    # Par défaut, data.json vit dans le conteneur (il est perdu si le conteneur est
+    # supprimé, ce qui convient à un usage ponctuel). Pour le conserver sur la
+    # machine hôte, décommenter la ligne ci-dessous et rendre le fichier accessible
+    # en écriture au user Apache du conteneur (uid 33) :  chmod 666 data.json
+    # volumes:
+    #   - ./data.json:/var/www/html/data.json

@@ -1,0 +1,4 @@
+# Fichiers de travail générés par api.php
+data.json.lock
+data.json.corrupt-*
+.data.json.*.tmp

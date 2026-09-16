@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration — Sondage PI Planning</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface-hover: #222633;
+            --border: #2a2e3d;
+            --border-accent: #3d4260;
+            --text: #e8e9ed;
+            --text-muted: #8b8fa3;
+            --accent: #6c5ce7;
+            --accent-light: #a29bfe;
+            --accent-glow: rgba(108, 92, 231, 0.15);
+            --success: #00cec9;
+            --warning: #fdcb6e;
+            --danger: #e17055;
+            --info: #74b9ff;
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .top-links { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+        .back-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            color: var(--accent-light); text-decoration: none; font-weight: 600; font-size: 0.9rem;
+            transition: opacity 0.2s;
+        }
+        .back-link:hover { opacity: 0.8; }
+
+        .header { text-align: center; margin-bottom: 40px; }
+        .header .tag {
+            display: inline-block; background: var(--accent-glow); border: 1px solid rgba(108, 92, 231, 0.3);
+            color: var(--accent-light); font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 1.5px; padding: 6px 16px; border-radius: 20px; margin-bottom: 16px;
+        }
+        .header h1 {
+            font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 800;
+            background: linear-gradient(135deg, var(--text) 0%, var(--accent-light) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px;
+        }
+        .header p { color: var(--text-muted); }
+
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 32px; margin-bottom: 24px;
+        }
+        .card-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; }
+        .card-subtitle { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px; }
+
+        input[type="text"] {
+            font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--text);
+            background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+            padding: 10px 14px; outline: none; width: 100%;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+        .btn {
+            font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600; border: none;
+            border-radius: var(--radius-sm); padding: 12px 24px; cursor: pointer; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+        }
+        .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 16px rgba(108, 92, 231, 0.3); }
+        .btn-primary:hover { background: #7c6ef0; transform: translateY(-1px); }
+        .btn-secondary { background: var(--surface-hover); color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--border); }
+        .btn-danger { background: rgba(225, 112, 85, 0.15); color: var(--danger); border: 1px solid rgba(225, 112, 85, 0.4); }
+        .btn-danger:hover { background: rgba(225, 112, 85, 0.3); }
+        .btn-sm { padding: 8px 14px; font-size: 0.8rem; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* Liste des sujets */
+        .subject-list { list-style: none; }
+        .subject-item {
+            display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin-bottom: 6px;
+            background: var(--surface-hover); border: 1px solid var(--border); border-radius: var(--radius-sm);
+        }
+        .subject-item .num {
+            width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff;
+            font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .subject-item .name { flex: 1; font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
+        .subject-item input.name { font-weight: 500; }
+        .icon-btn {
+            background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+            border-radius: 6px; width: 32px; height: 32px; cursor: pointer; font-size: 0.85rem;
+            display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0;
+        }
+        .icon-btn:hover:not(:disabled) { color: var(--text); border-color: var(--border-accent); background: var(--border); }
+        .icon-btn.danger:hover:not(:disabled) { color: var(--danger); border-color: var(--danger); }
+        .icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .add-row { display: flex; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border); }
+        .add-row input { flex: 1; }
+
+        /* Réponses */
+        .stat-bar { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+        .stat-item {
+            background: var(--surface-hover); border: 1px solid var(--border); border-radius: var(--radius-sm);
+            padding: 14px 20px; flex: 1; min-width: 130px; text-align: center;
+        }
+        .stat-value { font-size: 1.8rem; font-weight: 700; color: var(--accent-light); }
+        .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+        .resp-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .resp-table th, .resp-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+        .resp-table th { color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .resp-table td:last-child { text-align: right; }
+        .resp-wrapper { max-height: 320px; overflow: auto; margin-bottom: 20px; }
+
+        .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        .empty { color: var(--text-muted); font-style: italic; padding: 12px 0; }
+
+        /* Statut & toast */
+        .status { font-size: 0.8rem; color: var(--text-muted); min-height: 1.2em; margin-top: 10px; }
+        .status.ok { color: var(--success); }
+        .status.err { color: var(--danger); }
+        .toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: var(--danger); color: #fff; padding: 12px 24px; border-radius: var(--radius-sm);
+            font-weight: 500; font-size: 0.9rem; z-index: 999; transition: transform 0.3s ease, opacity 0.3s ease;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4); max-width: 90vw; text-align: center;
+            opacity: 0; pointer-events: none;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .toast.success { background: #00b894; }
+
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8em; color: var(--accent-light); }
+
+        @media (max-width: 640px) {
+            .container { padding: 24px 16px 60px; }
+            .header h1 { font-size: 1.8rem; }
+            .card { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="top-links">
+        <a href="index.html" class="back-link">← Retour au sondage</a>
+        <a href="results.html" class="back-link">📊 Voir les résultats</a>
+    </div>
+
+    <div class="header">
+        <div class="tag">Administration</div>
+        <h1>Paramétrage du sondage</h1>
+        <p>Sujets proposés par défaut et gestion des réponses</p>
+    </div>
+
+    <!-- Sujets -->
+    <div class="card">
+        <div class="card-title">Sujets par défaut</div>
+        <div class="card-subtitle">Liste proposée aux participants, dans cet ordre. Les modifications sont enregistrées immédiatement.</div>
+        <ul class="subject-list" id="subjectList"></ul>
+        <div class="add-row">
+            <input type="text" id="newSubjectInput" placeholder="Nouveau sujet…" maxlength="120">
+            <button class="btn btn-secondary btn-sm" onclick="addSubject()">+ Ajouter</button>
+        </div>
+        <div class="status" id="subjectStatus"></div>
+    </div>
+
+    <!-- Réponses -->
+    <div class="card">
+        <div class="card-title">Réponses au questionnaire</div>
+        <div class="card-subtitle">Chaque ligne est une participation. La suppression est définitive.</div>
+        <div class="stat-bar" id="statBar"></div>
+        <div class="resp-wrapper" id="respWrapper"></div>
+        <div class="actions">
+            <button class="btn btn-danger" id="clearBtn" onclick="clearResponses()">🗑️ Supprimer toutes les réponses</button>
+            <button class="btn btn-secondary" onclick="loadAll()">🔄 Rafraîchir</button>
+        </div>
+        <div class="status" id="respStatus"></div>
+    </div>
+
+    <!-- Données -->
+    <div class="card">
+        <div class="card-title">Données</div>
+        <div class="card-subtitle">Toute la base tient dans le fichier <code>data.json</code>, à la racine de l'application.</div>
+        <div class="actions">
+            <a class="btn btn-secondary" href="api.php?action=db" download="data.json">⬇️ Télécharger data.json</a>
+            <a class="btn btn-secondary" href="api.php?action=health" target="_blank" rel="noopener">🩺 Diagnostic serveur</a>
+        </div>
+        <div class="status" id="healthStatus"></div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    let subjects = [];
+    let responses = [];
+    let busy = false;
+
+    // -- API ------------------------------------------------------------------
+    async function api(url, body) {
+        let res;
+        try {
+            res = await fetch(url, body ? {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+                cache: 'no-store'
+            } : { cache: 'no-store' });
+        } catch (e) {
+            throw new Error('Serveur injoignable (vérifiez que PHP/Apache est lancé)');
+        }
+        let data = null;
+        try { data = await res.json(); } catch (e) { /* corps non JSON */ }
+        if (!res.ok || !data || data.success === false) {
+            throw new Error((data && data.error) ? data.error : `Erreur HTTP ${res.status}`);
+        }
+        return data;
+    }
+
+    // -- Chargement -----------------------------------------------------------
+    async function loadAll() {
+        try {
+            const data = await api('api.php?action=results');
+            subjects  = Array.isArray(data.subjects)  ? data.subjects  : [];
+            responses = Array.isArray(data.responses) ? data.responses : [];
+            renderSubjects();
+            renderResponses();
+            setStatus('subjectStatus', '');
+            setStatus('respStatus', '');
+        } catch (e) {
+            showToast('Chargement impossible : ' + e.message);
+        }
+        try {
+            const h = await api('api.php?action=health');
+            setStatus('healthStatus',
+                `PHP ${h.php} — fichier ${h.file_exists ? 'présent' : 'absent (sera créé)'}` +
+                `, ${h.file_exists ? (h.file_writable ? 'accessible en écriture' : 'NON accessible en écriture') : (h.dir_writable ? 'dossier accessible en écriture' : 'dossier NON accessible en écriture')}` +
+                ` — ${h.subjects} sujets, ${h.responses} réponses`,
+                (h.file_exists ? h.file_writable : h.dir_writable) ? 'ok' : 'err');
+        } catch (e) {
+            setStatus('healthStatus', 'Diagnostic indisponible : ' + e.message, 'err');
+        }
+    }
+
+    // -- Sujets ---------------------------------------------------------------
+    function renderSubjects() {
+        const ul = document.getElementById('subjectList');
+        ul.innerHTML = '';
+        if (!subjects.length) {
+            ul.innerHTML = '<li class="empty">Aucun sujet. Les participants pourront quand même en ajouter à la volée.</li>';
+            return;
+        }
+        subjects.forEach((s, i) => {
+            const li = document.createElement('li');
+            li.className = 'subject-item';
+            li.innerHTML = `
+                <span class="num">${i + 1}</span>
+                <span class="name" title="Double-clic pour renommer">${escHtml(s)}</span>
+                <button class="icon-btn" title="Monter" ${i === 0 ? 'disabled' : ''} onclick="moveSubject(${i}, -1)">▲</button>
+                <button class="icon-btn" title="Descendre" ${i === subjects.length - 1 ? 'disabled' : ''} onclick="moveSubject(${i}, 1)">▼</button>
+                <button class="icon-btn" title="Renommer" onclick="renameSubject(${i})">✎</button>
+                <button class="icon-btn danger" title="Supprimer" onclick="deleteSubject(${i})">✕</button>`;
+            li.querySelector('.name').addEventListener('dblclick', () => renameSubject(i));
+            ul.appendChild(li);
+        });
+    }
+
+    function addSubject() {
+        const input = document.getElementById('newSubjectInput');
+        const name = input.value.trim();
+        if (!name) return;
+        if (subjects.some(s => s.toLowerCase() === name.toLowerCase())) return showToast('Ce sujet existe déjà');
+        input.value = '';
+        saveSubjects([...subjects, name], `Sujet « ${name} » ajouté`);
+    }
+
+    function moveSubject(i, delta) {
+        const j = i + delta;
+        if (j < 0 || j >= subjects.length) return;
+        const next = [...subjects];
+        [next[i], next[j]] = [next[j], next[i]];
+        saveSubjects(next, 'Ordre enregistré');
+    }
+
+    function renameSubject(i) {
+        const current = subjects[i];
+        const name = prompt('Nouveau nom du sujet :', current);
+        if (name === null) return;
+        const clean = name.trim();
+        if (!clean || clean === current) return;
+        if (subjects.some((s, k) => k !== i && s.toLowerCase() === clean.toLowerCase())) return showToast('Ce sujet existe déjà');
+        const next = [...subjects];
+        next[i] = clean;
+        // Attention : renommer un sujet détache les réponses déjà données sur l'ancien nom.
+        const affected = responses.filter(r => (r.q1 && r.q1[current]) || (r.q2 || []).includes(current) || (r.q3 && r.q3[current]) || (r.q4 && r.q4[current])).length;
+        if (affected && !confirm(`${affected} réponse(s) mentionnent « ${current} » : elles ne seront plus rattachées à ce sujet après renommage. Continuer ?`)) return;
+        saveSubjects(next, `Sujet renommé en « ${clean} »`);
+    }
+
+    function deleteSubject(i) {
+        const name = subjects[i];
+        const affected = responses.filter(r => (r.q1 && r.q1[name]) || (r.q2 || []).includes(name) || (r.q3 && r.q3[name]) || (r.q4 && r.q4[name])).length;
+        const msg = affected
+            ? `Supprimer « ${name} » ? ${affected} réponse(s) y font référence : ces éléments de réponse seront effacés.`
+            : `Supprimer « ${name} » ?`;
+        if (!confirm(msg)) return;
+        saveSubjects(subjects.filter((_, k) => k !== i), `Sujet « ${name} » supprimé`);
+    }
+
+    async function saveSubjects(next, okMessage) {
+        if (busy) return;
+        busy = true;
+        setStatus('subjectStatus', 'Enregistrement…');
+        try {
+            const data = await api('api.php', { action: 'set_subjects', subjects: next });
+            subjects = data.subjects;
+            renderSubjects();
+            setStatus('subjectStatus', '✓ ' + okMessage, 'ok');
+            // Les réponses ont pu être nettoyées côté serveur : on recharge.
+            const r = await api('api.php?action=results');
+            responses = Array.isArray(r.responses) ? r.responses : [];
+            renderResponses();
+        } catch (e) {
+            setStatus('subjectStatus', 'Échec : ' + e.message, 'err');
+            showToast('Enregistrement impossible : ' + e.message);
+        } finally {
+            busy = false;
+        }
+    }
+
+    document.getElementById('newSubjectInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') addSubject();
+    });
+
+    // -- Réponses -------------------------------------------------------------
+    function renderResponses() {
+        document.getElementById('statBar').innerHTML = `
+            <div class="stat-item"><div class="stat-value">${responses.length}</div><div class="stat-label">Réponses</div></div>
+            <div class="stat-item"><div class="stat-value">${subjects.length}</div><div class="stat-label">Sujets</div></div>`;
+        const w = document.getElementById('respWrapper');
+        document.getElementById('clearBtn').disabled = responses.length === 0;
+        if (!responses.length) {
+            w.innerHTML = '<div class="empty">Aucune réponse enregistrée.</div>';
+            return;
+        }
+        let html = '<table class="resp-table"><thead><tr><th>#</th><th>Pseudo</th><th>Date</th><th>Charge (Q5)</th><th></th></tr></thead><tbody>';
+        responses.forEach(r => {
+            html += `<tr>
+                <td>${r.id}</td>
+                <td>${escHtml(r.pseudo)}</td>
+                <td>${escHtml(formatDate(r.created_at))}</td>
+                <td>${escHtml(shortQ5(r.q5))}</td>
+                <td><button class="icon-btn danger" title="Supprimer cette réponse" onclick="deleteResponse(${Number(r.id)})">✕</button></td>
+            </tr>`;
+        });
+        w.innerHTML = html + '</tbody></table>';
+    }
+
+    async function deleteResponse(id) {
+        if (busy) return;
+        const r = responses.find(x => x.id === id);
+        const pseudo = r ? r.pseudo : `#${id}`;
+        if (!confirm(`Supprimer la réponse de « ${pseudo} » ?`)) return;
+        busy = true;
+        try {
+            await api('api.php', { action: 'delete_response', id });
+            setStatus('respStatus', `✓ Réponse de « ${pseudo} » supprimée`, 'ok');
+            const data = await api('api.php?action=results');
+            responses = data.responses || [];
+            renderResponses();
+        } catch (e) {
+            showToast('Suppression impossible : ' + e.message);
+        } finally {
+            busy = false;
+        }
+    }
+
+    async function clearResponses() {
+        if (busy || !responses.length) return;
+        if (!confirm(`Supprimer définitivement les ${responses.length} réponse(s) ? Les sujets sont conservés.`)) return;
+        busy = true;
+        try {
+            const data = await api('api.php', { action: 'clear_responses' });
+            responses = [];
+            renderResponses();
+            setStatus('respStatus', `✓ ${data.deleted} réponse(s) supprimée(s)`, 'ok');
+            showToast('Toutes les réponses ont été supprimées', true);
+        } catch (e) {
+            showToast('Suppression impossible : ' + e.message);
+        } finally {
+            busy = false;
+        }
+    }
+
+    // -- Helpers --------------------------------------------------------------
+    function shortQ5(v) {
+        if (!v) return '—';
+        if (v.includes('trop')) return '🔥 Débordé';
+        if (v.includes('ennuie')) return '💤 Pas assez';
+        return '✅ Juste bien';
+    }
+    function formatDate(iso) {
+        const d = new Date(iso);
+        return isNaN(d) ? (iso || '') : d.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+    }
+    function setStatus(id, msg, cls) {
+        const el = document.getElementById(id);
+        el.textContent = msg;
+        el.className = 'status' + (cls ? ' ' + cls : '');
+    }
+    function showToast(msg, success) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast show' + (success ? ' success' : '');
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => t.classList.remove('show'), 3500);
+    }
+    function escHtml(s) {
+        const d = document.createElement('div');
+        d.textContent = s == null ? '' : String(s);
+        return d.innerHTML;
+    }
+
+    loadAll();
+</script>
+</body>
+</html>
